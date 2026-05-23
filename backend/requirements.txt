@@ -1,8 +1,4 @@
 fastapi
 uvicorn
-mcp
-google-cloud-aiplatform
-google-generativeai
-google-adk
+requests
 python-dotenv
-httpx
