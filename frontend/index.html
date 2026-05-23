@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Dev Card Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --error: #f85149;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #root {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #fff, #8b949e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subheading {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: var(--card-bg);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            transition: border-color 0.2s;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.3);
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Result Section */
+        .result-area {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-wrapper {
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .share-btn {
+            margin-top: 1.5rem;
+            background: #21262d;
+            border: 1px solid #30363d;
+            font-size: 0.9rem;
+        }
+
+        .share-btn:hover {
+            background: #30363d;
+        }
+
+        /* Loading Skeleton */
+        .skeleton {
+            width: 400px;
+            height: 450px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border: 1px solid #30363d;
+        }
+
+        .pulse {
+            background: linear-gradient(90deg, #161b22 25%, #21262d 50%, #161b22 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .error-msg {
+            color: var(--error);
+            background: rgba(248, 81, 73, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(248, 81, 73, 0.2);
+            margin-top: 1rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #238636;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Default backend URL if not replaced by envsubst
+        const BACKEND_URL = "${BACKEND_URL}".startsWith("$") ? "http://localhost:8080" : "${BACKEND_URL}";
+
+        const { useState } = React;
+
+        function App() {
+            const [username, setUsername] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [card, setCard] = useState(null);
+            const [error, setError] = useState('');
+            const [toast, setToast] = useState('');
+
+            const handleGenerate = async () => {
+                if (!username) return;
+                setLoading(true);
+                setError('');
+                setCard(null);
+
+                try {
+                    const response = await fetch(`${BACKEND_URL}/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username.trim() })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.detail || 'Failed to generate card');
+                    }
+
+                    const data = await response.json();
+                    setCard(data);
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const copyToClipboard = () => {
+                if (!card) return;
+                // Use the dedicated /card/{username} endpoint for sharing
+                const fullUrl = `${BACKEND_URL}/card/${card.username}`;
+                navigator.clipboard.writeText(fullUrl);
+                setToast('Link copied to clipboard!');
+                setTimeout(() => setToast(''), 3000);
+            };
+
+            return (
+                <div className="container">
+                    <h1>GitHub Dev Card Generator</h1>
+                    <p className="subheading">Enter any public GitHub username</p>
+
+                    <div className="input-group">
+                        <input 
+                            type="text" 
+                            placeholder="e.g. torvalds" 
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
+                        />
+                        <button onClick={handleGenerate} disabled={loading}>
+                            {loading ? 'Generating...' : 'Generate Card'}
+                        </button>
+                    </div>
+
+                    {error && <div className="error-msg">⚠️ {error}</div>}
+
+                    {loading && (
+                        <div className="result-area">
+                            <div className="skeleton">
+                                <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
+                                    <div className="pulse" style={{width: '80px', height: '80px', borderRadius: '50%'}}></div>
+                                    <div style={{flex: 1}}>
+                                        <div className="pulse" style={{width: '60%', height: '20px', marginBottom: '10px'}}></div>
+                                        <div className="pulse" style={{width: '40%', height: '15px'}}></div>
+                                    </div>
+                                </div>
+                                <div className="pulse" style={{width: '100%', height: '60px', marginTop: '10px'}}></div>
+                                <div className="pulse" style={{width: '80%', height: '30px'}}></div>
+                                <div className="pulse" style={{width: '100%', height: '100px'}}></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {card && (
+                        <div className="result-area">
+                            <div className="card-wrapper" dangerouslySetInnerHTML={{ __html: card.html }} />
+                            <button className="share-btn" onClick={copyToClipboard}>
+                                🔗 Share Card URL
+                            </button>
+                        </div>
+                    )}
+
+                    {toast && <div className="toast">{toast}</div>}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
