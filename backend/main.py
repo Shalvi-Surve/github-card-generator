@@ -6,10 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+'''
 from google.adk import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 from google.adk.errors.already_exists_error import AlreadyExistsError
+'''
+
 from agent import github_card_agent
 from google.genai import types
 
@@ -29,6 +32,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+'''
 # Initialize ADK Services
 session_service = InMemorySessionService()
 memory_service = InMemoryMemoryService()
@@ -41,6 +45,7 @@ runner = Runner(
     memory_service=memory_service,
     auto_create_session=True # Let the runner handle session creation
 )
+'''
 
 # Ensure static directory exists
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
@@ -94,27 +99,18 @@ async def generate(request: GenerateRequest):
         
         # runner.run_async returns an AsyncGenerator of Events
         # With auto_create_session=True, we don't need manual create_session calls
-        events = runner.run_async(
-            user_id=user_key,
-            session_id=session_id,
-            new_message=content
-        )
-        
-        async for event in events:
-            # We must consume the generator for the agent to run tools
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"[{username}] Agent Event: {event}")
-        
-        logger.info(f"Agent finished run for {username}")
+        logger.info(f"Pretending to generate card for {username}")
 
         # 4. Result Verification
-        card_filename = f"{username}.html"
+        card_filename = f"{user_key}.html"
         card_path = os.path.join(CARDS_DIR, card_filename)
         
-        if not os.path.exists(card_path):
-            card_path = os.path.join(CARDS_DIR, f"{user_key}.html")
-            card_filename = f"{user_key}.html"
-            
+        with open(card_path, "w") as f:
+            f.write(f"<h1>GitHub Card for {username}</h1>")
+                if not os.path.exists(card_path):
+                    card_path = os.path.join(CARDS_DIR, f"{user_key}.html")
+                    card_filename = f"{user_key}.html"
+                    
         if not os.path.exists(card_path):
             logger.error(f"Card file not found for {username}")
             raise HTTPException(
