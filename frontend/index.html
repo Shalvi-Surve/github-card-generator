@@ -284,7 +284,10 @@
 
                     {card && (
                         <div className="result-area">
-                            <div className="card-wrapper" dangerouslySetInnerHTML={{ __html: card.html }} />
+                            <iframe
+                              src={`${BACKEND_URL}/card/${card.username}`}
+                              style={{ width: "100%", height: "500px", border: "none", borderRadius: "15px" }}
+                            />
                             <button className="share-btn" onClick={copyToClipboard}>
                                 🔗 Share Card URL
                             </button>
